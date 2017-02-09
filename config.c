@@ -20,9 +20,6 @@
 
 T_CoreData*         M_ptCoreData; 
 
-#define M_atScheTCB                         (M_ptCoreData->atScheTCB)
-#define M_atPCB                             (M_ptCoreData->ptPCB)
-
 T_QueueCtl   s_atQueueCtl[MAX_QUEUE_COUNT]; 
 
 pthread_mutex_t                   g_threadTableMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -57,50 +54,114 @@ T_ProcessConfig gaProcCfgTbl[] =
 
 int g_procNum = sizeof(gaProcCfgTbl)/sizeof(gaProcCfgTbl[0]);
 
-void test1_Entry(WORD wState, WORD wSignal, void *pSignalPara, void *pVarP)
+void SendTestMsg(WORD16 wMsg,WORD16 wRecvPNO)
 {
-    int i;
-    int num=0;
-    
+    PID tReceiver;
+    tReceiver.wPno = wRecvPNO;
+    if(SUCCESS == R_SendMsg(wMsg,NULL,0,COMM_ASYN_NORMAL,&tReceiver))
+    {
+        printf("Send Msg=%d to Pno=0x%x Succ\n",wMsg,wRecvPNO);
+    }
+}
+void test1_Entry(WORD16 wState, WORD16 wSignal, void *pSignalPara, void *pVarP)
+{
     g_test1_cnt ++;
+    printf("test1 Entry cnt=%d\n",g_test1_cnt);
     
-    for(i=0;i<g_test1_cnt;i++)
-        num += i;
-    
-    printf("test1 Entry cnt=%d,Num addr=0x%x\n",g_test1_cnt,&num);
+    switch(wSignal)
+    {
+        case EV_STARTUP:
+        {
+            printf("test1 Recv EV_STARTUP\n");
+            SendTestMsg(1002,Proc_Type_Test2);
+            SendTestMsg(1003,Proc_Type_Test3);
+            break;
+        }
+        case 2001:
+        {
+            printf("test1 Recv msg: 2001\n");
+            break;
+        }
+        case 3001:
+        {
+            printf("test1 Recv msg: 3001\n");
+            break;
+        }
+    }
 
-    NormalReturnToTask(gptSelfPCBInfo);
-    
+    SetNextPCBState(S_StartUp);
     return;
 }
 
-void test2_Entry(WORD wState, WORD wSignal, void *pSignalPara, void *pVarP)
+void test2_Entry(WORD16 wState, WORD16 wSignal, void *pSignalPara, void *pVarP)
 {
     g_test2_cnt ++;
     printf("test2 Entry cnt=%d\n",g_test2_cnt);
-    
-    NormalReturnToTask(gptSelfPCBInfo);
-    
+
+    switch(wSignal)
+    {
+        case EV_STARTUP:
+        {
+            printf("test2 Recv EV_STARTUP\n");
+            break;
+        }
+        case 1002:
+        {
+            printf("test2 Recv msg: 1002\n");
+            SendTestMsg(2001,Proc_Type_Test1);
+            break;
+        }
+    }
+    SetNextPCBState(S_StartUp);
     return;
 }
 
-void test3_Entry(WORD wState, WORD wSignal, void *pSignalPara, void *pVarP)
+void test3_Entry(WORD16 wState, WORD16 wSignal, void *pSignalPara, void *pVarP)
 {
     g_test3_cnt ++;
     printf("test3 Entry cnt=%d\n",g_test3_cnt);
+
+    switch(wSignal)
+    {
+        case EV_STARTUP:
+        {
+            printf("test3 Recv EV_STARTUP\n");
+            break;
+        }
+        case 1003:
+        {
+            printf("test3 Recv msg: 1003\n");
+            SendTestMsg(3001,Proc_Type_Test1);
+            break;
+        }
+    }
     
-    NormalReturnToTask(gptSelfPCBInfo);
-    
+    SetNextPCBState(S_StartUp);
     return;
 }
 
-void test4_Entry(WORD wState, WORD wSignal, void *pSignalPara, void *pVarP)
+void test4_Entry(WORD16 wState, WORD16 wSignal, void *pSignalPara, void *pVarP)
 {
     g_test4_cnt ++;
     printf("test4 Entry cnt=%d\n",g_test4_cnt);
     
-    NormalReturnToTask(gptSelfPCBInfo);
+    switch(wSignal)
+    {
+        case EV_STARTUP:
+        {
+            printf("test4 Recv EV_STARTUP\n");
+            SendTestMsg(4004,Proc_Type_Test4);
+            break;
+        }
+        case 4004:
+        {
+            printf("test4 Recv msg: 4004\n");
+            SendTestMsg(4004,Proc_Type_Test4);
+            break;
+        }
+    }
     
+    SetNextPCBState(S_StartUp);
     return;
 }
 
@@ -188,4 +249,9 @@ WORD16 GetTaskScheProcCounts(WORD16 wScheTaskNo)
         }
     }
     return wResult;
+}
+
+int GetAllProcNum()
+{
+    return g_procNum;
 }
