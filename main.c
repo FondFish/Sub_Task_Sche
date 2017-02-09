@@ -15,19 +15,21 @@ extern  VOID InitTCBPool(VOID);
 WORD32 Vos_CreateQueue(CHAR *pucQueueName,WORD32  dwEntryCount,WORD32  dwEntrySize)
 {
     WORD32 dwQueCtlLoop   = 0;
-    int dwQueueCtrlId      = VOS_CREATE_QUEUE_FAILURE;
+    int dwQueueCtrlId      = VOS_CREATE_QUEUE_FAILURE;/* ±êÊ¶ÕÒµ½µÄ¿ÉÓÃ¶ÓÁÐID */
     T_QueueCtl *pQueueCtl = NULL;
     WORD32      dwQueueId     = 0;
     struct      mq_attr attr;
 
-    dwEntryCount += 1; 
+    dwEntryCount += 1; /* ²¹×ã¶ÓÁÐ³¤¶È */
     
     pthread_mutex_lock(&s_mutex);
     
+    /* ²éÕÒ¿ÕÏÐ¶ÓÁÐ¿ØÖÆ¿é */
     for (dwQueCtlLoop = 0; dwQueCtlLoop <MAX_QUEUE_COUNT; dwQueCtlLoop++)
     {
         if (s_atQueueCtl[dwQueCtlLoop].ucUsed == VOS_QUEUE_CTL_NO_USED)
         {
+            /* ÕÒµ½¿ÉÓÃµÄ¶ÓÁÐ¿ØÖÆ¿é */
             dwQueueCtrlId = dwQueCtlLoop;
             break;
         }
@@ -37,14 +39,17 @@ WORD32 Vos_CreateQueue(CHAR *pucQueueName,WORD32  dwEntryCount,WORD32  dwEntrySi
         pQueueCtl = &s_atQueueCtl[dwQueCtlLoop];
 
     pQueueCtl->dwEntrySize = dwEntrySize;
+    /* ¼ÙÉè¶ÓÁÐ³¤¶ÈÎª100¸öÔªËØ£¬Êµ¼ÊÖ»ÄÜ´æ·Å99¸öÔªËØ */
     pQueueCtl->dwTotalCount = dwEntryCount - 1;
     pQueueCtl->dwUsedCount = 0;
     pQueueCtl->ucUsed = VOS_QUEUE_CTL_USED;
     
     pthread_mutex_unlock(&s_mutex);
 
+   /* ±£Ö¤Î¨Ò»ÐÔ,±ÜÃâ´ò¿ªÒÑ¾­´ò¿ªµÄ¶ÓÁÐ */
     sprintf((CHAR *)(pQueueCtl->aucQueueName), MSQNAME, dwQueueCtrlId);
 
+    /* Çå³ýÏûÏ¢¶ÓÁÐ£¬·ÀÖ¹Ê¹ÓÃ¾ÉµÄÏûÏ¢¶ÓÁÐ */
     mq_unlink((CHAR*)(pQueueCtl->aucQueueName));
 
     memset(&attr, 0, sizeof(attr));
@@ -66,6 +71,7 @@ WORD32 Vos_CreateQueue(CHAR *pucQueueName,WORD32  dwEntryCount,WORD32  dwEntrySi
 }
 void R_UniThreadCleanup()
 {
+    /*´ýÊµÏÖ*/
     return;
 }
 CHAR *getThreadNameByID(WORD32  threadid)
@@ -97,17 +103,29 @@ VOID  Vos_UniThreadEntry(INT idx)
     pthread_attr_getstack(&attr,&pStackBase,(size_t *)&dwStackSize);
     pthread_attr_getguardsize(&attr, (size_t *)&dwGuardSize);             
 
-    g_threadInfo[idx].stackaddr = (OSS_ULONG)pStackBase;
+
+    /* ÏÖÔÚÓÉpStackBase£¬dwTaskStackSize£¬dwGuardSizeÈý¸ö±äÁ¿Ëù¹´»­µÄÈÎÎñ¶ÑÕ»²¼¾Ö£º
+
+          µÍµØÖ· ---------------------<--------¶ÑÕ»Ôö³¤·½Ïò------------------------------<- ¸ßµØÖ·   
+
+               |<------------------------dwTaskStackSize-------------------------------->| 
+    -----------|----------------------|--------------------------------------------------|-------------
+               | ±£»¤Ò³(dwGuardSize)  |                Êµ¼Ê¿ÉÓÃµÄ¶ÑÕ»                    |
+    -----------|----------------------|--------------------------------------------------|-------------
+               ^ 
+          pStackBase                          
+    */
+    g_threadInfo[idx].stackaddr = (ULONG)pStackBase;
     g_threadInfo[idx].stackguardsize = dwGuardSize;
     g_threadInfo[idx].thread_tid = gettid();
 
     pFun    = g_threadInfo[idx].pFun;
     arg     = g_threadInfo[idx].arg;
 
-    /*set thread name*/ 
     prctl(PR_SET_NAME,getThreadNameByID(g_threadInfo[idx].thread_id),0,0,0);
+
     pthread_cleanup_push(R_UniThreadCleanup,g_threadInfo + idx);
-   
+
     if (0 != pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &dOldCancelType))
     {
         printf("[OSS:%s:%d]setcanceltype failed: %s [so you can't stop me]\n", __FUNCTION__, __LINE__, strerror (errno));
@@ -118,11 +136,12 @@ VOID  Vos_UniThreadEntry(INT idx)
 
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,NULL);
     pthread_cleanup_pop(1);
+
     pthread_setcanceltype(dOldCancelType,NULL);
     return;
 }
 
-int Vos_StartTask(CHAR *pucName,WORD16 wPriority,WORD32 dwStacksize,TaskEntryProto tTaskEntry,OSS_ULONG dwTaskPara1)
+int Vos_StartTask(CHAR *pucName,WORD16 wPriority,WORD32 dwStacksize,TaskEntryProto tTaskEntry,ULONG dwTaskPara1)
 {
     WORD32    tTaskId = 0;
     BOOLEAN  bRet = TRUE;
@@ -136,11 +155,14 @@ int Vos_StartTask(CHAR *pucName,WORD16 wPriority,WORD32 dwStacksize,TaskEntryPro
     dwStacksize     += 2* swMemPageSize;    
 #if 0
     pthread_attr_init(&attr);
+
     pthread_attr_setinheritsched(&attr,PTHREAD_EXPLICIT_SCHED);
+
     pthread_attr_setschedpolicy(&attr,SCHED_FIFO);
     pthread_attr_getschedparam(&attr,&scheparam);
     scheparam.__sched_priority = wPriority;
     pthread_attr_setschedparam(&attr,&scheparam);
+
     pthread_attr_setstacksize(&attr,dwStacksize);
     pthread_attr_setguardsize(&attr,swMemPageSize);
 #endif
@@ -164,9 +186,11 @@ int Vos_StartTask(CHAR *pucName,WORD16 wPriority,WORD32 dwStacksize,TaskEntryPro
 void InitMQ()
 {
     WORD32 dwLoop = 0;
+
     for (dwLoop = 0; dwLoop < MAX_QUEUE_COUNT; dwLoop++)
     {
         memset(&s_atQueueCtl[dwLoop], 0, sizeof(T_QueueCtl));
+       
         s_atQueueCtl[dwLoop].ucUsed = VOS_QUEUE_CTL_NO_USED;
     }
 }
@@ -211,7 +235,7 @@ void InitCoreData()
 {
     M_ptCoreData = (T_CoreData *)malloc(sizeof(T_CoreData));
     memset(M_ptCoreData, 0, sizeof(T_CoreData));
-  
+    
     M_ptCoreData->wPCBCounts = g_procNum;
     M_ptCoreData->ptPCB = (T_PCB *)malloc((M_ptCoreData->wPCBCounts)* sizeof(T_PCB));
 }
@@ -219,10 +243,10 @@ void Init()
 {
     InitCoreData();
     memset(g_threadInfo,0,sizeof(g_threadInfo));
-   
+    
     InitTCBPool();
     InitMQ();
-  
+    
     InitPCBPool();
 }
 
@@ -238,3 +262,4 @@ int main()
     }
     return 0;
 }
+
