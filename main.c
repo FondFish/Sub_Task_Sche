@@ -148,7 +148,7 @@ int Vos_StartTask(CHAR *pucName,WORD16 wPriority,WORD32 dwStacksize,TaskEntryPro
     pthread_attr_t        attr;
     pthread_t             threadID;
     struct sched_param    scheparam;
-    OSS_LONG              thread_tab_index;
+    LONG              thread_tab_index;
     int                   errcode   = 0;
     int               swMemPageSize = getpagesize();
      
