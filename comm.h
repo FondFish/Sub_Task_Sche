@@ -1,5 +1,5 @@
-#ifndef _OSS_COMM_H
-#define _OSS_COMM_H
+#ifndef _COMM_H
+#define _COMM_H
 
 #include "type.h"
 #include "sche.h"
