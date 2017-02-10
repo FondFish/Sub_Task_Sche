@@ -1,5 +1,5 @@
-#ifndef _OSS_CONFIG_H
-#define _OSS_CONFIG_H
+#ifndef _CONFIG_H
+#define _CONFIG_H
 
 #include <stdlib.h>
 #include <stdio.h>
