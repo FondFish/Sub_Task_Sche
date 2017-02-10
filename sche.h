@@ -1,7 +1,7 @@
 
 
-#ifndef _OSS_SCHELIB_H
-#define _OSS_SCHELIB_H
+#ifndef _SCHELIB_H
+#define _SCHELIB_H
 
 #include <stdlib.h>
 #include <stdio.h>
