@@ -10,7 +10,7 @@ typedef unsigned long  ULONG;
 typedef char                CHAR;
 typedef signed long         SWORD32;
 typedef BYTE    BOOLEAN;
-typedef signed long       OSS_LONG;
+typedef signed long       LONG;
 typedef int       INT;
 typedef unsigned short  WORD;
 
