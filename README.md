@@ -1,9 +1,8 @@
   程序说明：主要完成linux“进程-任务-子任务”二级调度示例，其中用户级“子任务”调度使用消息驱动方式调度，已完成。
 目前的子任务调度方式为轮询调度。现已改为消息驱动。
    编译：gcc sche.h config.h sche.c config.c main.c -Wl,-lpthread -lrt  -o test
-已使用makefile进行编译生成。
-
-   运行示例：
+已使用makefile进行编译生成。或者执行build下的脚本，需要安装cmake，exe会生成在output目录。
+   运行示例：
 hp@hp:~/SCHE$ ./test 
 create mq:SCH0 SUCC,QueID:3
 task:SCH0 create SUCC,thread id:0xb0b12700
