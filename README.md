@@ -1,6 +1,6 @@
   usage：linux task-sub task second schduler，based on msg diver。
-   compile：gcc sche.h config.h sche.c config.c main.c -Wl,-lpthread -lrt  -o test
-or exec build script，need install cmake，elf file will be genrated in output。
+  compile：gcc sche.h config.h sche.c config.c main.c -Wl,-lpthread -lrt  -o test .
+Or exec build script，need install cmake，elf file will be genrated in output。
 
 hp@hp:~/SCHE$ ./test 
 create mq:SCH0 SUCC,QueID:3
